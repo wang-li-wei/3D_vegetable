@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import {
-  Card,
-  Tag,
   Button,
   Progress,
   Timeline,
   Modal,
   Input,
-  Typography,
 } from 'antd';
 import {
   CalendarOutlined,
@@ -16,11 +13,7 @@ import {
 } from '@ant-design/icons';
 import { useAppStore } from '@/store/useAppStore';
 import { GROWTH_STAGES } from '@/utils/constants';
-import type { GrowthStage, FarmLog } from '@/types';
 import dayjs from 'dayjs';
-
-const { Text } = Typography;
-const { TextArea } = Input;
 
 function GrowthStatus() {
   const growthStage = useAppStore((s) => s.growthStage);
@@ -42,44 +35,64 @@ function GrowthStatus() {
   );
 
   return (
-    <Card size="small" className="bg-gray-800/60 border-gray-700 mb-2">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <CalendarOutlined style={{ color: stageConfig.color }} />
-          <Text className="text-gray-300 text-sm">{stageConfig.label}</Text>
+    <div
+      className="glass-card mb-3"
+      style={{ padding: '14px 16px' }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <CalendarOutlined style={{ color: '#00E5FF', fontSize: 14, display: 'flex', alignItems: 'center' }} />
+          <span style={{ color: '#B0C8E0', fontSize: 13, fontWeight: 500, lineHeight: '20px' }}>
+            {stageConfig.label}
+          </span>
         </div>
-        <Tag color={stageConfig.color}>{stageConfig.label}</Tag>
+        <span
+          className="glass-tag glass-tag-success"
+          style={{ fontSize: 10 }}
+        >
+          {stageConfig.label}
+        </span>
       </div>
 
       <Progress
         percent={progress}
-        strokeColor={stageConfig.color}
-        railColor="#333"
+        strokeColor="#00E5FF"
+        railColor="rgba(0, 229, 255, 0.08)"
         size="small"
-        format={() => `第${growthDay}天`}
+        format={() => (
+          <span style={{ color: '#E8F4FF', fontSize: 11, fontWeight: 600 }}>
+            第{growthDay}天
+          </span>
+        )}
       />
 
-      <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+      <div className="grid grid-cols-2 gap-3 mt-3">
         <div>
-          <span className="text-gray-500">种植日期</span>
-          <div className="text-gray-300">{plantingDate}</div>
+          <span className="glass-label">种植日期</span>
+          <div style={{ color: '#B0C8E0', fontSize: 12, fontWeight: 500, marginTop: 2 }}>
+            {plantingDate}
+          </div>
         </div>
         <div>
-          <span className="text-gray-500">预计收获</span>
-          <div className="text-green-400">
+          <span className="glass-label">预计收获</span>
+          <div style={{ color: '#00FF88', fontSize: 12, fontWeight: 600, marginTop: 2 }}>
             {estimatedHarvestDays > 0 ? `约${estimatedHarvestDays}天后` : '可收获'}
           </div>
         </div>
         <div>
-          <span className="text-gray-500">积温</span>
-          <div className="text-blue-400">{accumulatedTemp.toFixed(0)}℃·d</div>
+          <span className="glass-label">积温</span>
+          <div style={{ color: '#00E5FF', fontSize: 12, fontWeight: 600, marginTop: 2 }}>
+            {accumulatedTemp.toFixed(0)}℃·d
+          </div>
         </div>
         <div>
-          <span className="text-gray-500">预估产量</span>
-          <div className="text-yellow-400">{estimatedWeight.toFixed(0)}g/株</div>
+          <span className="glass-label">预估产量</span>
+          <div style={{ color: '#FFB800', fontSize: 12, fontWeight: 600, marginTop: 2 }}>
+            {estimatedWeight.toFixed(0)}g/株
+          </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -102,35 +115,36 @@ function FarmLogPanel() {
   };
 
   return (
-    <Card
-      size="small"
-      className="bg-gray-800/60 border-gray-700"
-      title={
-        <span className="text-gray-300 text-xs">
-          <CalendarOutlined className="mr-1" />
-          农事日志
-        </span>
-      }
-      extra={
+    <div
+      className="glass-card"
+      style={{ padding: '4px 16px' }}
+    >
+      <div
+        className="flex items-center justify-between"
+        style={{ padding: '10px 0', borderBottom: '1px solid rgba(0, 229, 255, 0.08)' }}
+      >
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <CalendarOutlined style={{ color: '#00E5FF', fontSize: 13, display: 'flex', alignItems: 'center' }} />
+          <span className="glass-title" style={{ fontSize: 12, lineHeight: '18px' }}>农事日志</span>
+        </div>
         <Button
           type="text"
           size="small"
           icon={<PlusOutlined />}
-          className="text-blue-400"
+          style={{ color: '#00E5FF' }}
           onClick={() => setAddVisible(true)}
         />
-      }
-    >
-      <div className="max-h-40 overflow-y-auto custom-scrollbar">
+      </div>
+      <div className="max-h-40 overflow-y-auto custom-scrollbar py-2">
         <Timeline
           items={farmLogs.slice(0, 10).map((log) => ({
-            color: log.type === 'auto' ? 'blue' : 'green',
+            color: log.type === 'auto' ? '#00E5FF' : '#00FF88',
             content: (
               <div>
-                <div className="text-gray-500 text-[10px]">
+                <div className="glass-label" style={{ fontSize: 10 }}>
                   {dayjs(log.date).format('MM-DD HH:mm')}
                 </div>
-                <div className="text-gray-300 text-xs">{log.content}</div>
+                <div style={{ color: '#B0C8E0', fontSize: 12 }}>{log.content}</div>
               </div>
             ),
           }))}
@@ -138,32 +152,33 @@ function FarmLogPanel() {
       </div>
 
       <Modal
-        title={<span className="text-gray-200">添加农事记录</span>}
+        title={<span style={{ color: '#E8F4FF', fontWeight: 600 }}>添加农事记录</span>}
         open={addVisible}
         onOk={handleAddLog}
         onCancel={() => setAddVisible(false)}
         okText="保存"
         cancelText="取消"
-        className="dark-modal"
+        className="glass-modal"
       >
-        <TextArea
+        <Input.TextArea
           rows={3}
           value={logContent}
           onChange={(e) => setLogContent(e.target.value)}
           placeholder="请输入农事操作记录..."
-          className="mt-2"
+          className="glass-input mt-2"
+          style={{ width: '100%' }}
         />
       </Modal>
-    </Card>
+    </div>
   );
 }
 
 export default function GrowthPanel() {
   return (
-    <div className="h-full overflow-y-auto px-2 py-1 custom-scrollbar">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <Text className="text-gray-300 text-sm font-semibold">生长管理</Text>
-        <EditOutlined className="text-blue-400" />
+    <div className="h-full overflow-y-auto px-3 py-3 custom-scrollbar">
+      <div className="flex items-center justify-between mb-4 px-1">
+        <span className="glass-title" style={{ lineHeight: '22px' }}>生长管理</span>
+        <EditOutlined style={{ color: '#00E5FF', fontSize: 16, display: 'flex', alignItems: 'center' }} />
       </div>
       <GrowthStatus />
       <FarmLogPanel />

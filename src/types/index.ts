@@ -7,9 +7,15 @@ export interface SensorData {
 }
 
 export interface DeviceStatus {
+  mode?: 'auto' | 'manual';
+  pid_enabled?: boolean;
+  timer_mister_enabled?: boolean;
+  target_temp_min?: number;
+  target_temp_max?: number;
   heater: boolean;
   cooler: boolean;
   mister: boolean;
+  pump: boolean;
 }
 
 export interface MqttMessage {
@@ -20,8 +26,9 @@ export interface MqttMessage {
 }
 
 export interface ControlCommand {
-  device: 'heater' | 'cooler' | 'mister';
-  action: 'on' | 'off';
+  device: 'heater' | 'cooler' | 'mister' | 'pump' | 'mode' | 'target_temp' | 'target_temp_max' | 'pid_control' | 'timer_mister';
+  action: 'on' | 'off' | 'auto' | 'manual' | 'set';
+  value?: number;
   timestamp: number;
 }
 
@@ -58,7 +65,7 @@ export interface AlarmRecord {
   value: number;
   threshold: number;
   type: 'high' | 'low';
-  status: 'active' | 'ignored' | 'resolved';
+  status: 'active' | 'resolved' | 'read';
   message: string;
 }
 
@@ -67,7 +74,10 @@ export interface HistoryDataPoint {
   value: number;
 }
 
-export type AutoControlMode = 'off' | 'pid_temp' | 'timer_mister';
+export interface AutoControlState {
+  pidEnabled: boolean;
+  timerMisterEnabled: boolean;
+}
 
 export interface MisterTimerConfig {
   intervalMinutes: number;

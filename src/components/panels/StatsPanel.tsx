@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Card, Select, Button, Typography, Table, DatePicker } from 'antd';
+import { Select, Button, Table, DatePicker } from 'antd';
 import { BarChartOutlined, DownloadOutlined } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { useAppStore } from '@/store/useAppStore';
@@ -8,7 +8,6 @@ import type { ColumnsType } from 'antd/es/table';
 import * as XLSX from 'xlsx';
 import dayjs from 'dayjs';
 
-const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 type StatPeriod = 'day' | 'week' | 'month';
@@ -25,24 +24,33 @@ export default function StatsPanel() {
       backgroundColor: 'transparent',
       title: {
         text: '环境参数趋势',
-        textStyle: { color: '#e0e0e0', fontSize: 12 },
+        textStyle: { color: '#E8F4FF', fontSize: 12, fontWeight: 600 },
         left: 'center',
       },
-      tooltip: { trigger: 'axis', backgroundColor: 'rgba(0,0,0,0.8)', textStyle: { color: '#fff' } },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(6, 18, 44, 0.90)',
+        borderColor: 'rgba(0, 229, 255, 0.25)',
+        textStyle: { color: '#B0C8E0' },
+      },
       legend: {
         data: ['温度', '湿度', 'pH'],
-        textStyle: { color: '#999', fontSize: 10 },
+        textStyle: { color: 'rgba(176, 200, 224, 0.50)', fontSize: 10 },
         bottom: 0,
       },
       grid: { left: 40, right: 20, top: 35, bottom: 35 },
       xAxis: {
         type: 'category',
         data: statsData.map((d) => d.date.slice(5)),
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#999', fontSize: 9 },
+        axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.15)' } },
+        axisLabel: { color: 'rgba(176, 200, 224, 0.50)', fontSize: 9 },
       },
       yAxis: [
-        { type: 'value', axisLabel: { color: '#999' }, splitLine: { lineStyle: { color: '#333' } } },
+        {
+          type: 'value',
+          axisLabel: { color: 'rgba(176, 200, 224, 0.50)' },
+          splitLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.06)' } },
+        },
       ],
       series: [
         {
@@ -50,24 +58,24 @@ export default function StatsPanel() {
           type: 'line',
           data: statsData.map((d) => d.avgAirTemp),
           smooth: true,
-          lineStyle: { color: '#ff6b6b', width: 2 },
-          itemStyle: { color: '#ff6b6b' },
+          lineStyle: { color: '#FF4757', width: 2 },
+          itemStyle: { color: '#FF4757' },
         },
         {
           name: '湿度',
           type: 'line',
           data: statsData.map((d) => d.avgAirHum),
           smooth: true,
-          lineStyle: { color: '#4ecdc4', width: 2 },
-          itemStyle: { color: '#4ecdc4' },
+          lineStyle: { color: '#00E5FF', width: 2 },
+          itemStyle: { color: '#00E5FF' },
         },
         {
           name: 'pH',
           type: 'line',
           data: statsData.map((d) => d.avgPh),
           smooth: true,
-          lineStyle: { color: '#ffe66d', width: 2 },
-          itemStyle: { color: '#ffe66d' },
+          lineStyle: { color: '#FFB800', width: 2 },
+          itemStyle: { color: '#FFB800' },
           yAxisIndex: 0,
         },
       ],
@@ -80,45 +88,50 @@ export default function StatsPanel() {
       backgroundColor: 'transparent',
       title: {
         text: '设备运行时长(h)',
-        textStyle: { color: '#e0e0e0', fontSize: 12 },
+        textStyle: { color: '#E8F4FF', fontSize: 12, fontWeight: 600 },
         left: 'center',
       },
-      tooltip: { trigger: 'axis', backgroundColor: 'rgba(0,0,0,0.8)', textStyle: { color: '#fff' } },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(6, 18, 44, 0.90)',
+        borderColor: 'rgba(0, 229, 255, 0.25)',
+        textStyle: { color: '#B0C8E0' },
+      },
       legend: {
         data: ['加热棒', '制冷片', '雾化系统'],
-        textStyle: { color: '#999', fontSize: 10 },
+        textStyle: { color: 'rgba(176, 200, 224, 0.50)', fontSize: 10 },
         bottom: 0,
       },
       grid: { left: 40, right: 20, top: 35, bottom: 35 },
       xAxis: {
         type: 'category',
         data: statsData.map((d) => d.date.slice(5)),
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#999', fontSize: 9 },
+        axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.15)' } },
+        axisLabel: { color: 'rgba(176, 200, 224, 0.50)', fontSize: 9 },
       },
       yAxis: {
         type: 'value',
-        axisLabel: { color: '#999' },
-        splitLine: { lineStyle: { color: '#333' } },
+        axisLabel: { color: 'rgba(176, 200, 224, 0.50)' },
+        splitLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.06)' } },
       },
       series: [
         {
           name: '加热棒',
           type: 'bar',
           data: statsData.map((d) => d.heaterHours),
-          itemStyle: { color: '#ff6b6b' },
+          itemStyle: { color: '#FF4757', borderRadius: [2, 2, 0, 0] },
         },
         {
           name: '制冷片',
           type: 'bar',
           data: statsData.map((d) => d.coolerHours),
-          itemStyle: { color: '#4ecdc4' },
+          itemStyle: { color: '#00E5FF', borderRadius: [2, 2, 0, 0] },
         },
         {
           name: '雾化系统',
           type: 'bar',
           data: statsData.map((d) => d.misterHours),
-          itemStyle: { color: '#1890ff' },
+          itemStyle: { color: '#00FF88', borderRadius: [2, 2, 0, 0] },
         },
       ],
     }),
@@ -147,17 +160,43 @@ export default function StatsPanel() {
   };
 
   const columns: ColumnsType<typeof statsData[0]> = [
-    { title: '日期', dataIndex: 'date', key: 'date', width: 90, render: (v: string) => <span className="text-gray-300 text-xs">{v.slice(5)}</span> },
-    { title: '温度', dataIndex: 'avgAirTemp', key: 'avgAirTemp', width: 60, render: (v: number) => <span className="text-xs">{v}℃</span> },
-    { title: '湿度', dataIndex: 'avgAirHum', key: 'avgAirHum', width: 60, render: (v: number) => <span className="text-xs">{v}%</span> },
-    { title: 'pH', dataIndex: 'avgPh', key: 'avgPh', width: 50, render: (v: number) => <span className="text-xs">{v}</span> },
+    {
+      title: '日期',
+      dataIndex: 'date',
+      key: 'date',
+      width: 90,
+      render: (v: string) => (
+        <span style={{ color: '#B0C8E0', fontSize: 11, fontWeight: 500 }}>{v.slice(5)}</span>
+      ),
+    },
+    {
+      title: '温度',
+      dataIndex: 'avgAirTemp',
+      key: 'avgAirTemp',
+      width: 60,
+      render: (v: number) => <span style={{ fontSize: 11, fontWeight: 500 }}>{v}℃</span>,
+    },
+    {
+      title: '湿度',
+      dataIndex: 'avgAirHum',
+      key: 'avgAirHum',
+      width: 60,
+      render: (v: number) => <span style={{ fontSize: 11, fontWeight: 500 }}>{v}%</span>,
+    },
+    {
+      title: 'pH',
+      dataIndex: 'avgPh',
+      key: 'avgPh',
+      width: 50,
+      render: (v: number) => <span style={{ fontSize: 11, fontWeight: 500 }}>{v}</span>,
+    },
   ];
 
   return (
-    <div className="h-full overflow-y-auto px-2 py-1 custom-scrollbar">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <Text className="text-gray-300 text-sm font-semibold">数据统计</Text>
-        <div className="flex items-center gap-2">
+    <div className="h-full overflow-y-auto px-3 py-3 custom-scrollbar">
+      <div className="flex items-center justify-between mb-4 px-1">
+        <span className="glass-title" style={{ lineHeight: '22px' }}>数据统计</span>
+        <div className="flex items-center" style={{ gap: 8 }}>
           <Select
             value={period}
             onChange={setPeriod}
@@ -173,7 +212,7 @@ export default function StatsPanel() {
             type="text"
             size="small"
             icon={<DownloadOutlined />}
-            className="text-blue-400"
+            style={{ color: '#00E5FF', display: 'flex', alignItems: 'center' }}
             onClick={handleExport}
           />
         </div>
@@ -188,7 +227,7 @@ export default function StatsPanel() {
         rowKey="date"
         size="small"
         pagination={false}
-        className="mt-2"
+        className="alarm-table mt-2"
         scroll={{ y: 150 }}
       />
     </div>

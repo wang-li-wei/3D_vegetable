@@ -1,19 +1,17 @@
 import { useState } from 'react';
-import { Card, Tag, Button, Table, Modal, InputNumber, Typography, Badge, Space } from 'antd';
+import { Button, Table, Modal, InputNumber, Badge, Space } from 'antd';
 import {
   AlertOutlined,
   BellOutlined,
-  CheckCircleOutlined,
   SettingOutlined,
   SoundOutlined,
+  CheckOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppStore } from '@/store/useAppStore';
 import { SENSOR_CONFIG } from '@/utils/constants';
-import type { AlarmRecord, ThresholdConfig, SensorData } from '@/types';
+import type { AlarmRecord, ThresholdConfig } from '@/types';
 import dayjs from 'dayjs';
-
-const { Text } = Typography;
 
 function ThresholdSettings({
   visible,
@@ -27,20 +25,20 @@ function ThresholdSettings({
 
   return (
     <Modal
-      title={<span className="text-gray-200">阈值设置</span>}
+      title={<span style={{ color: '#E8F4FF', fontWeight: 600 }}>阈值设置</span>}
       open={visible}
       onCancel={onClose}
       onOk={onClose}
       okText="确定"
       cancelText="取消"
-      className="dark-modal"
+      className="glass-modal"
     >
       <div className="space-y-3">
         {SENSOR_CONFIG.map((config) => (
           <div key={config.key} className="flex items-center gap-3">
-            <span className="text-gray-400 text-sm w-24">{config.label}</span>
+            <span className="glass-label" style={{ width: 96 }}>{config.label}</span>
             <div className="flex items-center gap-2">
-              <Text className="text-gray-500 text-xs">下限</Text>
+              <span className="glass-label" style={{ fontSize: 10 }}>下限</span>
               <InputNumber
                 size="small"
                 value={thresholds[config.key].min}
@@ -54,9 +52,10 @@ function ThresholdSettings({
                   } as Partial<ThresholdConfig>)
                 }
                 step={0.1}
-                className="w-20"
+                className="glass-input"
+                style={{ width: 72 }}
               />
-              <Text className="text-gray-500 text-xs">上限</Text>
+              <span className="glass-label" style={{ fontSize: 10 }}>上限</span>
               <InputNumber
                 size="small"
                 value={thresholds[config.key].max}
@@ -70,7 +69,8 @@ function ThresholdSettings({
                   } as Partial<ThresholdConfig>)
                 }
                 step={0.1}
-                className="w-20"
+                className="glass-input"
+                style={{ width: 72 }}
               />
             </div>
           </div>
@@ -83,6 +83,7 @@ function ThresholdSettings({
 export default function AlarmPanel() {
   const alarms = useAppStore((s) => s.alarms);
   const updateAlarmStatus = useAppStore((s) => s.updateAlarmStatus);
+  const markAllAlarmsRead = useAppStore((s) => s.markAllAlarmsRead);
   const soundEnabled = useAppStore((s) => s.system.soundEnabled);
   const setSoundEnabled = useAppStore((s) => s.setSoundEnabled);
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -97,7 +98,9 @@ export default function AlarmPanel() {
       key: 'timestamp',
       width: 80,
       render: (ts: number) => (
-        <span className="text-gray-400 text-xs">{dayjs(ts).format('HH:mm:ss')}</span>
+        <span className="glass-label" style={{ fontSize: 11 }}>
+          {dayjs(ts).format('HH:mm:ss')}
+        </span>
       ),
     },
     {
@@ -105,7 +108,7 @@ export default function AlarmPanel() {
       dataIndex: 'message',
       key: 'message',
       render: (msg: string) => (
-        <span className="text-gray-300 text-xs">{msg}</span>
+        <span style={{ color: '#B0C8E0', fontSize: 12 }}>{msg}</span>
       ),
     },
     {
@@ -115,26 +118,41 @@ export default function AlarmPanel() {
       width: 70,
       render: (status: string, record) => (
         <Space size={4}>
-          <Tag
-            color={
-              status === 'active'
-                ? 'error'
-                : status === 'ignored'
-                ? 'warning'
-                : 'success'
-            }
-            className="text-xs m-0"
+          <span
+            className="glass-tag"
+            style={{
+              background:
+                status === 'active'
+                  ? 'rgba(255, 71, 87, 0.15)'
+                  : status === 'read'
+                  ? 'rgba(176, 200, 224, 0.10)'
+                  : 'rgba(0, 255, 136, 0.12)',
+              borderColor:
+                status === 'active'
+                  ? 'rgba(255, 71, 87, 0.30)'
+                  : status === 'read'
+                  ? 'rgba(176, 200, 224, 0.15)'
+                  : 'rgba(0, 255, 136, 0.25)',
+              color:
+                status === 'active'
+                  ? '#FF4757'
+                  : status === 'read'
+                  ? 'rgba(176, 200, 224, 0.50)'
+                  : '#00FF88',
+              fontSize: 10,
+              padding: '1px 6px',
+            }}
           >
-            {status === 'active' ? '活跃' : status === 'ignored' ? '已忽略' : '已处理'}
-          </Tag>
+            {status === 'active' ? '活跃' : status === 'read' ? '已读' : '已处理'}
+          </span>
           {status === 'active' && (
             <Button
               type="link"
               size="small"
-              className="text-xs p-0"
-              onClick={() => updateAlarmStatus(record.id, 'ignored')}
+              style={{ fontSize: 10, padding: 0, color: '#00E5FF' }}
+              onClick={() => updateAlarmStatus(record.id, 'read')}
             >
-              忽略
+              已读
             </Button>
           )}
         </Space>
@@ -143,49 +161,60 @@ export default function AlarmPanel() {
   ];
 
   return (
-    <div className="h-full overflow-y-auto px-2 py-1 custom-scrollbar">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2">
+    <div className="h-full overflow-y-auto px-3 py-3 custom-scrollbar">
+      <div className="flex items-center justify-between mb-4 px-1">
+        <div className="flex items-center" style={{ gap: 8 }}>
           <Badge count={alarmCount} size="small" offset={[6, 0]}>
-            <BellOutlined className="text-blue-400" />
+            <BellOutlined style={{ color: '#00E5FF', fontSize: 16, display: 'flex', alignItems: 'center' }} />
           </Badge>
-          <Text className="text-gray-300 text-sm font-semibold">报警通知</Text>
+          <span className="glass-title" style={{ lineHeight: '22px' }}>报警通知</span>
         </div>
         <Space size={8}>
+          {alarmCount > 0 && (
+            <Button
+              type="text"
+              size="small"
+              icon={<CheckOutlined />}
+              style={{ color: '#00E5FF', display: 'flex', alignItems: 'center', fontSize: 12 }}
+              onClick={markAllAlarmsRead}
+            >
+              一键已读
+            </Button>
+          )}
           <Button
             type="text"
             size="small"
             icon={<SoundOutlined />}
-            className={soundEnabled ? 'text-blue-400' : 'text-gray-600'}
+            style={{ color: soundEnabled ? '#00E5FF' : 'rgba(176, 200, 224, 0.30)', display: 'flex', alignItems: 'center' }}
             onClick={() => setSoundEnabled(!soundEnabled)}
           />
           <Button
             type="text"
             size="small"
             icon={<SettingOutlined />}
-            className="text-blue-400"
+            style={{ color: '#00E5FF', display: 'flex', alignItems: 'center' }}
             onClick={() => setSettingsVisible(true)}
           />
         </Space>
       </div>
 
       {alarmCount > 0 && (
-        <Card
-          size="small"
-          className="mb-2 bg-red-900/30 border-red-700 animate-pulse"
+        <div
+          className="glass-card-alarm animate-pulse-glow-red mb-3"
+          style={{ padding: '12px 16px' }}
         >
-          <div className="flex items-center gap-2">
-            <AlertOutlined className="text-red-400 text-lg" />
+          <div className="flex items-center" style={{ gap: 12 }}>
+            <AlertOutlined style={{ color: '#FF4757', fontSize: 20, display: 'flex', alignItems: 'center', lineHeight: 1 }} />
             <div>
-              <div className="text-red-400 text-sm font-bold">
+              <div style={{ color: '#FF4757', fontSize: 14, fontWeight: 700, lineHeight: '20px' }}>
                 {alarmCount}个活跃报警
               </div>
-              <div className="text-red-300/60 text-xs">
+              <div style={{ color: 'rgba(255, 71, 87, 0.65)', fontSize: 12, lineHeight: '18px' }}>
                 {activeAlarms[0]?.message}
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       <Table
@@ -196,7 +225,7 @@ export default function AlarmPanel() {
         pagination={false}
         className="alarm-table"
         rowClassName={(record) =>
-          record.status === 'active' ? 'bg-red-900/10' : ''
+          record.status === 'active' ? 'glass-card-alarm' : ''
         }
       />
 

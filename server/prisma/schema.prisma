@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 传感器数据 - 每次 ESP32 上报一条
+model SensorData {
+  id            Int      @id @default(autoincrement())
+  deviceId      String   @map("device_id") @db.VarChar(32)
+  airTemp       Float    @map("air_temp")
+  airHum        Float    @map("air_hum")
+  nutrientTemp  Float    @map("nutrient_temp")
+  light         Float
+  ph            Float
+  recordedAt    DateTime @map("recorded_at") @default(now())
+
+  @@index([deviceId, recordedAt])
+  @@map("sensor_data")
+}
+
+// 设备状态快照 - 每次 ESP32 上报附带
+model DeviceStatus {
+  id                  Int      @id @default(autoincrement())
+  deviceId            String   @map("device_id") @db.VarChar(32)
+  heater              Boolean  @default(false)
+  cooler              Boolean  @default(false)
+  mister              Boolean  @default(false)
+  pump                Boolean  @default(false)
+  pidEnabled          Boolean  @default(false) @map("pid_enabled")
+  timerMisterEnabled  Boolean  @default(false) @map("timer_mister_enabled")
+  targetTempMin       Float    @default(18) @map("target_temp_min")
+  targetTempMax       Float    @default(22) @map("target_temp_max")
+  recordedAt          DateTime @map("recorded_at") @default(now())
+
+  @@index([deviceId, recordedAt])
+  @@map("device_status")
+}
+
+// 报警记录
+model Alarm {
+  id          Int      @id @default(autoincrement())
+  parameter   String   @db.VarChar(32)
+  value       Float
+  threshold   Float
+  type        String   @db.VarChar(8)   // high / low
+  status      String   @db.VarChar(16)  @default("active") // active / read / resolved
+  message     String   @db.VarChar(255)
+  createdAt   DateTime @map("created_at") @default(now())
+  updatedAt   DateTime @map("updated_at") @updatedAt @default(now())
+
+  @@index([status, createdAt])
+  @@map("alarms")
+}
+
+// 农事日志
+model FarmLog {
+  id        Int      @id @default(autoincrement())
+  type      String   @db.VarChar(16) // auto / manual
+  content   String   @db.VarChar(255)
+  createdAt DateTime @map("created_at") @default(now())
+
+  @@index([createdAt])
+  @@map("farm_logs")
+}
+
+// 生长记录
+model GrowthRecord {
+  id              Int      @id @default(autoincrement())
+  date            String   @db.VarChar(10) // YYYY-MM-DD
+  stage           String   @db.VarChar(16) // seedling / growing / harvest
+  day             Int
+  accumulatedTemp Float    @map("accumulated_temp")
+  estimatedWeight Float    @map("estimated_weight")
+  airTemp         Float    @map("air_temp")
+  airHum          Float    @map("air_hum")
+  nutrientTemp    Float    @map("nutrient_temp")
+  light           Float
+  ph              Float
+  createdAt       DateTime @map("created_at") @default(now())
+
+  @@unique([date])
+  @@map("growth_records")
+}
+
+// 阈值配置
+model ThresholdConfig {
+  id        Int      @id @default(autoincrement())
+  parameter String   @db.VarChar(32) @unique
+  minVal    Float    @map("min_val")
+  maxVal    Float    @map("max_val")
+  updatedAt DateTime @map("updated_at") @updatedAt
+
+  @@map("threshold_config")
+}
+
+// 系统配置 KV
+model SystemConfig {
+  id    Int    @id @default(autoincrement())
+  key   String @db.VarChar(64) @unique
+  value String @db.Text
+
+  @@map("system_config")
+}
+
+// 用户（用于 JWT 登录）
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique @db.VarChar(64)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         String   @default("user") @db.VarChar(16) // admin / user
+  createdAt    DateTime @map("created_at") @default(now())
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  @@map("users")
+}

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Card, Tag, Modal, Typography } from 'antd';
+import { Modal } from 'antd';
 import {
   AlertOutlined,
   CheckCircleOutlined,
@@ -10,8 +10,6 @@ import { useAppStore } from '@/store/useAppStore';
 import { SENSOR_CONFIG } from '@/utils/constants';
 import type { SensorData } from '@/types';
 import dayjs from 'dayjs';
-
-const { Text } = Typography;
 
 function SensorCard({
   config,
@@ -27,46 +25,52 @@ function SensorCard({
   onClick: () => void;
 }) {
   return (
-    <Card
-      size="small"
-      className={`mb-2 cursor-pointer transition-all duration-300 ${
-        isAlarm
-          ? 'border-red-500 bg-red-900/20 shadow-[0_0_10px_rgba(255,0,0,0.3)]'
-          : 'border-gray-700 bg-gray-800/60 hover:border-blue-500'
-      }`}
+    <div
+      className={isAlarm ? 'glass-card-alarm' : 'glass-card'}
       onClick={onClick}
+      style={{ padding: '12px 16px', cursor: 'pointer' }}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{config.icon}</span>
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <span style={{ fontSize: 20, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{config.icon}</span>
           <div>
-            <div className="text-gray-400 text-xs">{config.label}</div>
-            <div className="flex items-baseline gap-1">
+            <div className="glass-label">{config.label}</div>
+            <div className="flex items-center" style={{ gap: 2, marginTop: 2 }}>
               <span
-                className={`text-xl font-bold ${
-                  isAlarm ? 'text-red-400' : 'text-blue-400'
-                }`}
+                className="glass-value-sm animate-number"
+                style={{ color: isAlarm ? '#FF4757' : '#00E5FF', lineHeight: 1.2, fontSize: 20 }}
               >
                 {value.toFixed(config.decimals)}
               </span>
-              <span className="text-gray-500 text-xs">{config.unit}</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(176, 200, 224, 0.55)', lineHeight: 1.2 }}>{config.unit}</span>
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <Tag
-            icon={isAlarm ? <AlertOutlined /> : <CheckCircleOutlined />}
-            color={isAlarm ? 'error' : 'success'}
-            className="text-xs m-0"
+        <div className="flex flex-col items-end" style={{ gap: 6 }}>
+          <span
+            className="glass-tag"
+            style={{
+              background: isAlarm
+                ? 'rgba(255, 71, 87, 0.15)'
+                : 'rgba(0, 255, 136, 0.12)',
+              borderColor: isAlarm
+                ? 'rgba(255, 71, 87, 0.30)'
+                : 'rgba(0, 255, 136, 0.25)',
+              color: isAlarm ? '#FF4757' : '#00FF88',
+              fontSize: 10,
+              padding: '2px 8px',
+              lineHeight: '16px',
+            }}
           >
+            {isAlarm ? <AlertOutlined /> : <CheckCircleOutlined />}{' '}
             {isAlarm ? '异常' : '正常'}
-          </Tag>
-          <div className="text-gray-500 text-[10px]">
+          </span>
+          <span style={{ fontSize: 10, color: 'rgba(176, 200, 224, 0.40)', lineHeight: '14px' }}>
             {threshold.min}~{threshold.max}
-          </div>
+          </span>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -87,14 +91,14 @@ function HistoryChart({
       backgroundColor: 'transparent',
       title: {
         text: `${config.label} 24小时趋势`,
-        textStyle: { color: '#e0e0e0', fontSize: 14 },
+        textStyle: { color: '#E8F4FF', fontSize: 14, fontWeight: 600 },
         left: 'center',
       },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        borderColor: '#1890ff',
-        textStyle: { color: '#fff' },
+        backgroundColor: 'rgba(6, 18, 44, 0.90)',
+        borderColor: 'rgba(0, 229, 255, 0.25)',
+        textStyle: { color: '#B0C8E0' },
         formatter: (params: Array<{ value: number; dataIndex: number }>) => {
           const p = params[0];
           const time = dayjs(historyData[p.dataIndex]?.timestamp).format('HH:mm');
@@ -105,21 +109,21 @@ function HistoryChart({
       xAxis: {
         type: 'category',
         data: historyData.map((d) => dayjs(d.timestamp).format('HH:mm')),
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#999', fontSize: 10, interval: 11 },
+        axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.15)' } },
+        axisLabel: { color: 'rgba(176, 200, 224, 0.50)', fontSize: 10, interval: 11 },
       },
       yAxis: {
         type: 'value',
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#999' },
-        splitLine: { lineStyle: { color: '#333' } },
+        axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.15)' } },
+        axisLabel: { color: 'rgba(176, 200, 224, 0.50)' },
+        splitLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.06)' } },
       },
       series: [
         {
           type: 'line',
           data: historyData.map((d) => d.value),
           smooth: true,
-          lineStyle: { color: '#1890ff', width: 2 },
+          lineStyle: { color: '#00E5FF', width: 2 },
           areaStyle: {
             color: {
               type: 'linear',
@@ -128,8 +132,8 @@ function HistoryChart({
               x2: 0,
               y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(24,144,255,0.3)' },
-                { offset: 1, color: 'rgba(24,144,255,0.02)' },
+                { offset: 0, color: 'rgba(0,229,255,0.25)' },
+                { offset: 1, color: 'rgba(0,229,255,0.02)' },
               ],
             },
           },
@@ -147,7 +151,7 @@ function HistoryChart({
       onCancel={onClose}
       footer={null}
       width={700}
-      className="dark-modal"
+      className="glass-modal"
     >
       <ReactECharts option={chartOption} style={{ height: 350 }} />
     </Modal>
@@ -172,21 +176,23 @@ export default function SensorPanel() {
   };
 
   return (
-    <div className="h-full overflow-y-auto px-2 py-1 custom-scrollbar">
-      <div className="flex items-center justify-between mb-3 px-1">
-        <Text className="text-gray-300 text-sm font-semibold">实时数据监测</Text>
-        <LineChartOutlined className="text-blue-400" />
+    <div className="overflow-y-auto px-3 py-3 custom-scrollbar">
+      <div className="flex items-center justify-between mb-4 px-1">
+        <span className="glass-title" style={{ lineHeight: '22px' }}>实时数据监测</span>
+        <LineChartOutlined style={{ color: '#00E5FF', fontSize: 16, display: 'flex', alignItems: 'center' }} />
       </div>
-      {SENSOR_CONFIG.map((config) => (
-        <SensorCard
-          key={config.key}
-          config={config}
-          value={sensorData[config.key]}
-          isAlarm={isAlarm(config.key)}
-          threshold={thresholds[config.key]}
-          onClick={() => handleCardClick(config.key)}
-        />
-      ))}
+      <div className="space-y-3">
+        {SENSOR_CONFIG.map((config) => (
+          <SensorCard
+            key={config.key}
+            config={config}
+            value={sensorData[config.key]}
+            isAlarm={isAlarm(config.key)}
+            threshold={thresholds[config.key]}
+            onClick={() => handleCardClick(config.key)}
+          />
+        ))}
+      </div>
       <HistoryChart
         parameter={chartParam}
         visible={chartVisible}

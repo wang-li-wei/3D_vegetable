@@ -1,15 +1,8 @@
 import { useState } from 'react';
-import { ConfigProvider, theme, Tag, Badge } from 'antd';
+import { ConfigProvider, theme } from 'antd';
 import {
-  ApiOutlined,
   ThunderboltOutlined,
-  RobotOutlined,
-  BellOutlined,
-  CloudServerOutlined,
-  BarChartOutlined,
   DashboardOutlined,
-  ExperimentOutlined,
-  CheckCircleOutlined,
   AlertOutlined,
 } from '@ant-design/icons';
 import TopNav from '@/components/common/TopNav';
@@ -22,6 +15,7 @@ import GrowthPanel from '@/components/panels/GrowthPanel';
 import StatsPanel from '@/components/panels/StatsPanel';
 import { useMqttData } from '@/hooks/useMqttData';
 import { useAlarmSound } from '@/hooks/useAlarmSound';
+import { useDataSync } from '@/hooks/useDataSync';
 import { useAppStore } from '@/store/useAppStore';
 import { SENSOR_CONFIG } from '@/utils/constants';
 import type { SensorData } from '@/types';
@@ -67,79 +61,112 @@ function QuickStatus() {
     harvest: '收获期',
   };
 
-  const stageColors: Record<string, string> = {
-    seedling: 'text-green-400',
-    growing: 'text-emerald-400',
-    harvest: 'text-lime-300',
-  };
-
   return (
-    <div className="px-2 py-2 space-y-2">
-      <div className="text-xs text-gray-400 font-semibold mb-1 flex items-center gap-1">
-        <DashboardOutlined className="text-blue-400" />
-        快捷状态
+    <div className="px-3 py-3 space-y-3">
+      <div className="glass-section-label flex items-center" style={{ gap: 6 }}>
+        <DashboardOutlined style={{ color: '#00E5FF', fontSize: 12, display: 'flex', alignItems: 'center' }} />
+        <span style={{ lineHeight: '16px' }}>快捷状态</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5">
-        <div className="bg-gray-800/60 rounded px-2 py-1.5 border border-gray-700/50">
-          <div className="text-[10px] text-gray-500">连接状态</div>
-          <div className="flex items-center gap-1">
-            <div className={`w-1.5 h-1.5 rounded-full ${system.connected ? 'bg-green-400' : 'bg-red-400'}`} />
-            <span className={`text-xs font-medium ${system.connected ? 'text-green-400' : 'text-red-400'}`}>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="glass-card" style={{ padding: '10px 16px' }}>
+          <div className="glass-label" style={{ lineHeight: '16px' }}>连接状态</div>
+          <div className="flex items-center" style={{ gap: 6, marginTop: 4 }}>
+            <div
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{
+                background: system.connected ? '#00FF88' : '#FF4757',
+                boxShadow: system.connected
+                  ? '0 0 6px rgba(0,255,136,0.5)'
+                  : '0 0 6px rgba(255,71,87,0.5)',
+              }}
+            />
+            <span
+              style={{ fontSize: 12, fontWeight: 600, color: system.connected ? '#00FF88' : '#FF4757', lineHeight: '18px' }}
+            >
               {system.connected ? '在线' : '离线'}
             </span>
           </div>
         </div>
-        <div className="bg-gray-800/60 rounded px-2 py-1.5 border border-gray-700/50">
-          <div className="text-[10px] text-gray-500">生长阶段</div>
-          <span className={`text-xs font-medium ${stageColors[growthStage]}`}>
+        <div className="glass-card" style={{ padding: '10px 16px' }}>
+          <div className="glass-label" style={{ lineHeight: '16px' }}>生长阶段</div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#00E5FF', lineHeight: '18px', marginTop: 4, display: 'block' }}>
             {stageLabels[growthStage]} · D{growthDay}
           </span>
         </div>
-        <div className="bg-gray-800/60 rounded px-2 py-1.5 border border-gray-700/50">
-          <div className="text-[10px] text-gray-500">报警</div>
-          <span className={`text-xs font-medium ${activeAlarmCount > 0 ? 'text-red-400' : 'text-green-400'}`}>
+        <div className="glass-card" style={{ padding: '10px 16px' }}>
+          <div className="glass-label" style={{ lineHeight: '16px' }}>报警</div>
+          <span
+            style={{ fontSize: 12, fontWeight: 600, color: activeAlarmCount > 0 ? '#FF4757' : '#00FF88', lineHeight: '18px', marginTop: 4, display: 'block' }}
+          >
             {activeAlarmCount > 0 ? `${activeAlarmCount}个活跃` : '全部正常'}
           </span>
         </div>
-        <div className="bg-gray-800/60 rounded px-2 py-1.5 border border-gray-700/50">
-          <div className="text-[10px] text-gray-500">设备</div>
-          <span className="text-xs font-medium text-blue-400">
-            {[deviceStatus.heater, deviceStatus.cooler, deviceStatus.mister].filter(Boolean).length}/3 运行
+        <div className="glass-card" style={{ padding: '10px 16px' }}>
+          <div className="glass-label" style={{ lineHeight: '16px' }}>设备</div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#00E5FF', lineHeight: '18px', marginTop: 4, display: 'block' }}>
+            {[deviceStatus.heater, deviceStatus.cooler, deviceStatus.mister, deviceStatus.pump].filter(Boolean).length}/4 运行
           </span>
         </div>
       </div>
 
-      <div className="text-xs text-gray-400 font-semibold mt-2 mb-1 flex items-center gap-1">
-        <ThunderboltOutlined className="text-yellow-400" />
-        设备状态
+      <div className="glass-section-label flex items-center" style={{ gap: 6 }}>
+        <ThunderboltOutlined style={{ color: '#00E5FF', fontSize: 12, display: 'flex', alignItems: 'center' }} />
+        <span style={{ lineHeight: '16px' }}>设备状态</span>
       </div>
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {([
-          { key: 'heater' as const, label: '加热棒', icon: '🔥', color: 'text-red-400' },
-          { key: 'cooler' as const, label: '制冷片', icon: '❄️', color: 'text-blue-400' },
-          { key: 'mister' as const, label: '雾化系统', icon: '💨', color: 'text-cyan-400' },
+          { key: 'heater' as const, label: '加热棒', icon: '🔥' },
+          { key: 'cooler' as const, label: '制冷片', icon: '❄️' },
+          { key: 'mister' as const, label: '雾化系统', icon: '💨' },
+          { key: 'pump' as const, label: '水泵', icon: '💧' },
         ]).map((dev) => (
-          <div key={dev.key} className="flex items-center justify-between bg-gray-800/40 rounded px-2 py-1">
-            <span className="text-xs text-gray-300">{dev.icon} {dev.label}</span>
-            <span className={`text-[10px] font-medium ${deviceStatus[dev.key] ? dev.color : 'text-gray-600'}`}>
+          <div
+            key={dev.key}
+            className={`flex items-center justify-between ${
+              deviceStatus[dev.key] ? 'glass-btn-active' : ''
+            }`}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 2,
+              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              background: deviceStatus[dev.key]
+                ? 'rgba(0, 229, 255, 0.12)'
+                : 'rgba(8, 24, 58, 0.50)',
+              border: `1px solid ${deviceStatus[dev.key] ? 'rgba(0, 229, 255, 0.30)' : 'rgba(0, 229, 255, 0.08)'}`,
+            }}
+          >
+            <span style={{ fontSize: 12, color: '#B0C8E0', lineHeight: '18px' }}>
+              {dev.icon} {dev.label}
+            </span>
+            <span
+              style={{ fontSize: 10, fontWeight: 600, color: deviceStatus[dev.key] ? '#00E5FF' : 'rgba(176, 200, 224, 0.35)', lineHeight: '14px' }}
+            >
               {deviceStatus[dev.key] ? '● 运行' : '○ 停止'}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="text-xs text-gray-400 font-semibold mt-2 mb-1 flex items-center gap-1">
-        <AlertOutlined className="text-orange-400" />
-        传感器报警
+      <div className="glass-section-label flex items-center" style={{ gap: 6 }}>
+        <AlertOutlined style={{ color: '#00E5FF', fontSize: 12, display: 'flex', alignItems: 'center' }} />
+        <span style={{ lineHeight: '16px' }}>传感器报警</span>
       </div>
-      <div className="space-y-0.5">
+      <div className="space-y-1">
         {SENSOR_CONFIG.map((config) => {
           const alarm = isAlarm(config.key);
           return (
-            <div key={config.key} className="flex items-center justify-between px-1 py-0.5">
-              <span className="text-[10px] text-gray-400">{config.icon} {config.label}</span>
-              <span className={`text-[10px] ${alarm ? 'text-red-400' : 'text-green-500'}`}>
+            <div
+              key={config.key}
+              className="flex items-center justify-between"
+              style={{ padding: '4px 8px' }}
+            >
+              <span className="glass-label" style={{ lineHeight: '16px' }}>
+                {config.icon} {config.label}
+              </span>
+              <span
+                style={{ fontSize: 10, fontWeight: 600, color: alarm ? '#FF4757' : '#00FF88', lineHeight: '14px' }}
+              >
                 {alarm ? '⚠ 异常' : '✓ 正常'}
               </span>
             </div>
@@ -157,39 +184,47 @@ export default function App() {
 
   useMqttData();
   useAlarmSound();
+  useDataSync();
 
   return (
     <ConfigProvider
       theme={{
         algorithm: theme.darkAlgorithm,
         token: {
-          colorPrimary: '#1890ff',
-          colorBgContainer: '#1a1a2e',
-          colorBgElevated: '#16213e',
-          colorBorder: '#333',
-          colorText: '#e0e0e0',
-          borderRadius: 6,
+          colorPrimary: '#00E5FF',
+          colorBgContainer: 'rgba(6, 18, 44, 0.85)',
+          colorBgElevated: 'rgba(8, 24, 58, 0.90)',
+          colorBorder: 'rgba(0, 229, 255, 0.15)',
+          colorText: '#B0C8E0',
+          borderRadius: 4,
         },
       }}
     >
-      <div className="h-screen w-screen flex flex-col bg-[#0a1628] overflow-hidden">
+      <div className="h-screen w-screen flex flex-col bg-[#060D1F] overflow-hidden scan-line-enabled">
         <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="flex-1 flex overflow-hidden">
-          <div className="w-72 border-r border-gray-800 bg-gray-900/50 overflow-hidden flex-shrink-0 flex flex-col">
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-              <SensorPanel />
-            </div>
-            <div className="border-t border-gray-800 bg-gray-900/70 max-h-64 overflow-y-auto custom-scrollbar">
+          <div
+            className="glass-panel-container overflow-y-auto custom-scrollbar flex-shrink-0"
+            style={{ width: 340 }}
+          >
+            <SensorPanel />
+            <div style={{ borderTop: '1px solid rgba(0, 229, 255, 0.08)' }}>
               <QuickStatus />
             </div>
           </div>
           <div className="flex-1 relative">
             <SceneCanvas />
-            <div className="absolute top-3 left-3 bg-black/50 backdrop-blur-sm rounded-lg px-3 py-1.5 text-xs text-gray-400">
+            <div
+              className="absolute top-3 left-3 glass-device-label"
+              style={{ fontSize: 11 }}
+            >
               鼠标左键旋转 | 右键平移 | 滚轮缩放 | 点击设备查看详情
             </div>
           </div>
-          <div className="w-80 border-l border-gray-800 bg-gray-900/50 overflow-hidden flex-shrink-0">
+          <div
+            className="glass-panel-container-right overflow-hidden flex-shrink-0"
+            style={{ width: 320 }}
+          >
             <RightPanel activeTab={activeTab} />
           </div>
         </div>

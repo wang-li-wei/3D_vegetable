@@ -7,15 +7,31 @@ import type {
   GrowthStage,
   GrowthRecord,
   FarmLog,
-  AutoControlMode,
+  AutoControlState,
   MisterTimerConfig,
   HistoryDataPoint,
 } from '@/types';
 import { DEFAULT_THRESHOLDS } from '@/utils/constants';
+import { thresholdApi } from '@/services/api';
+
+const THRESHOLD_STORAGE_KEY = '3d_vegetable_thresholds';
+
+function loadThresholds(): ThresholdConfig {
+  try {
+    const saved = localStorage.getItem(THRESHOLD_STORAGE_KEY);
+    if (saved) return { ...DEFAULT_THRESHOLDS, ...JSON.parse(saved) };
+  } catch { /* ignore */ }
+  return { ...DEFAULT_THRESHOLDS };
+}
+
+function saveThresholdsLocal(thresholds: ThresholdConfig) {
+  try {
+    localStorage.setItem(THRESHOLD_STORAGE_KEY, JSON.stringify(thresholds));
+  } catch { /* ignore */ }
+}
 
 interface SystemState {
   connected: boolean;
-  simulationMode: boolean;
   onlineDevices: number;
   totalDevices: number;
   soundEnabled: boolean;
@@ -32,14 +48,15 @@ interface AppStore {
   plantingDate: string;
   growthRecords: GrowthRecord[];
   farmLogs: FarmLog[];
-  autoControlMode: AutoControlMode;
+  autoControl: AutoControlState;
+  targetTempMin: number;
+  targetTempMax: number;
   misterTimer: MisterTimerConfig;
   historyData: Record<keyof SensorData, HistoryDataPoint[]>;
   selectedSensor: keyof SensorData | null;
   selectedDevice: string | null;
 
   setConnected: (connected: boolean) => void;
-  setSimulationMode: (mode: boolean) => void;
   setOnlineDevices: (online: number, total: number) => void;
   setSoundEnabled: (enabled: boolean) => void;
   updateSensorData: (data: Partial<SensorData>) => void;
@@ -47,13 +64,16 @@ interface AppStore {
   setThresholds: (thresholds: Partial<ThresholdConfig>) => void;
   addAlarm: (alarm: AlarmRecord) => void;
   updateAlarmStatus: (id: string, status: AlarmRecord['status']) => void;
+  markAllAlarmsRead: () => void;
   clearAlarms: () => void;
   setGrowthStage: (stage: GrowthStage) => void;
   setGrowthDay: (day: number) => void;
   setPlantingDate: (date: string) => void;
   addGrowthRecord: (record: GrowthRecord) => void;
   addFarmLog: (log: FarmLog) => void;
-  setAutoControlMode: (mode: AutoControlMode) => void;
+  setAutoControl: (state: Partial<AutoControlState>) => void;
+  setTargetTempMin: (temp: number) => void;
+  setTargetTempMax: (temp: number) => void;
   setMisterTimer: (config: Partial<MisterTimerConfig>) => void;
   setHistoryData: (key: keyof SensorData, data: HistoryDataPoint[]) => void;
   setSelectedSensor: (key: keyof SensorData | null) => void;
@@ -63,7 +83,6 @@ interface AppStore {
 export const useAppStore = create<AppStore>((set) => ({
   system: {
     connected: false,
-    simulationMode: true,
     onlineDevices: 0,
     totalDevices: 1,
     soundEnabled: true,
@@ -79,15 +98,18 @@ export const useAppStore = create<AppStore>((set) => ({
     heater: false,
     cooler: false,
     mister: false,
+    pump: false,
   },
-  thresholds: { ...DEFAULT_THRESHOLDS },
+  thresholds: loadThresholds(),
   alarms: [],
   growthStage: 'growing',
   growthDay: 20,
   plantingDate: new Date(Date.now() - 20 * 24 * 3600 * 1000).toISOString().split('T')[0],
   growthRecords: [],
   farmLogs: [],
-  autoControlMode: 'off',
+  autoControl: { pidEnabled: false, timerMisterEnabled: false },
+  targetTempMin: 18,
+  targetTempMax: 22,
   misterTimer: {
     intervalMinutes: 30,
     durationMinutes: 5,
@@ -104,8 +126,6 @@ export const useAppStore = create<AppStore>((set) => ({
 
   setConnected: (connected) =>
     set((s) => ({ system: { ...s.system, connected } })),
-  setSimulationMode: (mode) =>
-    set((s) => ({ system: { ...s.system, simulationMode: mode } })),
   setOnlineDevices: (online, total) =>
     set((s) => ({ system: { ...s.system, onlineDevices: online, totalDevices: total } })),
   setSoundEnabled: (enabled) =>
@@ -115,12 +135,33 @@ export const useAppStore = create<AppStore>((set) => ({
   updateDeviceStatus: (status) =>
     set((s) => ({ deviceStatus: { ...s.deviceStatus, ...status } })),
   setThresholds: (thresholds) =>
-    set((s) => ({ thresholds: { ...s.thresholds, ...thresholds } })),
+    set((s) => {
+      const updated = { ...s.thresholds, ...thresholds };
+      // 本地持久化（后端不可用时的 fallback）
+      saveThresholdsLocal(updated);
+      // 并行同步到后端，不阻塞 UI
+      const promises: Promise<unknown>[] = [];
+      for (const [key, val] of Object.entries(thresholds)) {
+        if (val && typeof val === 'object' && 'min' in val && 'max' in val) {
+          promises.push(
+            thresholdApi
+              .update(key, (val as { min: number; max: number }).min, (val as { min: number; max: number }).max)
+              .catch(() => {})
+          );
+        }
+      }
+      void Promise.all(promises);
+      return { thresholds: updated };
+    }),
   addAlarm: (alarm) =>
     set((s) => ({ alarms: [alarm, ...s.alarms].slice(0, 100) })),
   updateAlarmStatus: (id, status) =>
     set((s) => ({
       alarms: s.alarms.map((a) => (a.id === id ? { ...a, status } : a)),
+    })),
+  markAllAlarmsRead: () =>
+    set((s) => ({
+      alarms: s.alarms.map((a) => (a.status === 'active' ? { ...a, status: 'read' as const } : a)),
     })),
   clearAlarms: () => set({ alarms: [] }),
   setGrowthStage: (stage) => set({ growthStage: stage }),
@@ -130,7 +171,10 @@ export const useAppStore = create<AppStore>((set) => ({
     set((s) => ({ growthRecords: [...s.growthRecords, record] })),
   addFarmLog: (log) =>
     set((s) => ({ farmLogs: [log, ...s.farmLogs].slice(0, 200) })),
-  setAutoControlMode: (mode) => set({ autoControlMode: mode }),
+  setAutoControl: (state) =>
+    set((s) => ({ autoControl: { ...s.autoControl, ...state } })),
+  setTargetTempMin: (temp) => set({ targetTempMin: temp }),
+  setTargetTempMax: (temp) => set({ targetTempMax: temp }),
   setMisterTimer: (config) =>
     set((s) => ({ misterTimer: { ...s.misterTimer, ...config } })),
   setHistoryData: (key, data) =>

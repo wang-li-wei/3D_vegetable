@@ -22,15 +22,16 @@ export function generateSimDeviceStatus(): DeviceStatus {
     heater: Math.random() > 0.7,
     cooler: Math.random() > 0.8,
     mister: Math.random() > 0.5,
+    pump: Math.random() > 0.6,
   };
 }
 
-export function generateSimMessage(): MqttMessage {
+export function generateSimMessage(currentDeviceStatus?: DeviceStatus): MqttMessage {
   return {
     device_id: 'esp32_001',
     timestamp: Math.floor(Date.now() / 1000),
     data: generateSimSensorData(),
-    status: generateSimDeviceStatus(),
+    status: currentDeviceStatus ?? { heater: false, cooler: false, mister: false, pump: false },
   };
 }
 

@@ -16,11 +16,18 @@ export const SENSOR_CONFIG: SensorDisplayConfig[] = [
   { key: 'ph', label: '营养液pH', unit: '', icon: '⚗️', decimals: 1 },
 ];
 
+// 自动适配 MQTT WebSocket 地址：
+// - 开发环境：默认 ws://localhost:9001/mqtt
+// - 生产环境：自动使用当前域名，通过 Nginx 代理 /mqtt 路径
+//   (http → ws, https → wss，由 Nginx 统一入口)
+const autoMqttUrl = typeof window !== 'undefined'
+  ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/mqtt`
+  : 'ws://localhost:9001/mqtt';
+
 export const MQTT_CONFIG = {
-  defaultBroker: 'ws://localhost:8083/mqtt',
+  defaultBroker: import.meta.env.VITE_MQTT_URL || autoMqttUrl,
   subscribeTopic: '/lettuce/sensor/data',
   publishTopic: '/lettuce/control/command',
-  statusTopic: '/lettuce/device/status',
 };
 
 export const GROWTH_STAGES = {
@@ -38,9 +45,9 @@ export const GREENHOUSE_DIMENSIONS = {
 };
 
 export const PID_CONFIG = {
-  targetTemp: 20,
+  targetTempMin: 18,
+  targetTempMax: 22,
   kp: 2.0,
   ki: 0.1,
   kd: 1.0,
-  tempRange: { min: 18, max: 22 },
 };

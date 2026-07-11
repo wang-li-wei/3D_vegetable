@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
-import { Modal, Tag, Descriptions, Typography, Badge, Space, Divider } from 'antd';
+import { Modal, Badge, Space } from 'antd';
 import {
-  ThunderboltOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  AlertOutlined,
   InfoCircleOutlined,
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
@@ -13,20 +11,21 @@ import { SENSOR_CONFIG } from '@/utils/constants';
 import type { SensorData } from '@/types';
 import dayjs from 'dayjs';
 
-const { Text } = Typography;
-
 interface DeviceDetailModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const DEVICE_INFO: Record<string, {
-  name: string;
-  type: 'sensor' | 'actuator';
-  description: string;
-  relatedParams: (keyof SensorData)[];
-  specs: Array<{ label: string; value: string }>;
-}> = {
+const DEVICE_INFO: Record<
+  string,
+  {
+    name: string;
+    type: 'sensor' | 'actuator';
+    description: string;
+    relatedParams: (keyof SensorData)[];
+    specs: Array<{ label: string; value: string }>;
+  }
+> = {
   heater: {
     name: '加热棒',
     type: 'actuator',
@@ -149,13 +148,16 @@ const DEVICE_INFO: Record<string, {
   },
 };
 
-export default function DeviceDetailModal({ visible, onClose }: DeviceDetailModalProps) {
+export default function DeviceDetailModal({
+  visible,
+  onClose,
+}: DeviceDetailModalProps) {
   const selectedDevice = useAppStore((s) => s.selectedDevice);
   const sensorData = useAppStore((s) => s.sensorData);
   const deviceStatus = useAppStore((s) => s.deviceStatus);
   const thresholds = useAppStore((s) => s.thresholds);
   const historyData = useAppStore((s) => s.historyData);
-  const autoControlMode = useAppStore((s) => s.autoControlMode);
+  const autoControl = useAppStore((s) => s.autoControl);
 
   const deviceInfo = selectedDevice ? DEVICE_INFO[selectedDevice] : null;
 
@@ -177,41 +179,48 @@ export default function DeviceDetailModal({ visible, onClose }: DeviceDetailModa
       backgroundColor: 'transparent',
       title: {
         text: `${config?.label || param} 趋势`,
-        textStyle: { color: '#e0e0e0', fontSize: 12 },
+        textStyle: { color: '#E8F4FF', fontSize: 12, fontWeight: 600 },
         left: 'center',
       },
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        borderColor: '#1890ff',
-        textStyle: { color: '#fff' },
+        backgroundColor: 'rgba(6, 18, 44, 0.90)',
+        borderColor: 'rgba(0, 229, 255, 0.25)',
+        textStyle: { color: '#B0C8E0' },
       },
       grid: { left: 45, right: 15, top: 35, bottom: 25 },
       xAxis: {
         type: 'category',
         data: data.map((d) => dayjs(d.timestamp).format('HH:mm')),
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#999', fontSize: 9, interval: Math.floor(data.length / 6) },
+        axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.15)' } },
+        axisLabel: {
+          color: 'rgba(176, 200, 224, 0.50)',
+          fontSize: 9,
+          interval: Math.floor(data.length / 6),
+        },
       },
       yAxis: {
         type: 'value',
-        axisLine: { lineStyle: { color: '#555' } },
-        axisLabel: { color: '#999' },
-        splitLine: { lineStyle: { color: '#333' } },
+        axisLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.15)' } },
+        axisLabel: { color: 'rgba(176, 200, 224, 0.50)' },
+        splitLine: { lineStyle: { color: 'rgba(0, 229, 255, 0.06)' } },
       },
       series: [
         {
           type: 'line',
           data: data.map((d) => d.value),
           smooth: true,
-          lineStyle: { color: '#1890ff', width: 2 },
+          lineStyle: { color: '#00E5FF', width: 2 },
           areaStyle: {
             color: {
               type: 'linear',
-              x: 0, y: 0, x2: 0, y2: 1,
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
               colorStops: [
-                { offset: 0, color: 'rgba(24,144,255,0.3)' },
-                { offset: 1, color: 'rgba(24,144,255,0.02)' },
+                { offset: 0, color: 'rgba(0,229,255,0.25)' },
+                { offset: 1, color: 'rgba(0,229,255,0.02)' },
               ],
             },
           },
@@ -230,51 +239,173 @@ export default function DeviceDetailModal({ visible, onClose }: DeviceDetailModa
       onCancel={onClose}
       footer={null}
       width={520}
-      className="dark-modal"
+      className="glass-modal"
     >
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              deviceInfo.type === 'sensor' ? 'bg-green-900/50 border border-green-500/30' : 'bg-blue-900/50 border border-blue-500/30'
-            }`}>
-              <InfoCircleOutlined className={deviceInfo.type === 'sensor' ? 'text-green-400' : 'text-blue-400'} />
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{
+                background:
+                  deviceInfo.type === 'sensor'
+                    ? 'rgba(0, 255, 136, 0.12)'
+                    : 'rgba(0, 229, 255, 0.12)',
+                border: `1px solid ${
+                  deviceInfo.type === 'sensor'
+                    ? 'rgba(0, 255, 136, 0.25)'
+                    : 'rgba(0, 229, 255, 0.30)'
+                }`,
+              }}
+            >
+              <InfoCircleOutlined
+                style={{
+                  color:
+                    deviceInfo.type === 'sensor' ? '#00FF88' : '#00E5FF',
+                }}
+              />
             </div>
             <div>
-              <div className="text-gray-200 font-semibold text-base">{deviceInfo.name}</div>
-              <Tag color={deviceInfo.type === 'sensor' ? 'green' : 'blue'} className="m-0 mt-0.5">
+              <div
+                style={{
+                  color: '#E8F4FF',
+                  fontWeight: 600,
+                  fontSize: 16,
+                }}
+              >
+                {deviceInfo.name}
+              </div>
+              <span
+                className="glass-tag"
+                style={{
+                  background:
+                    deviceInfo.type === 'sensor'
+                      ? 'rgba(0, 255, 136, 0.12)'
+                      : 'rgba(0, 229, 255, 0.12)',
+                  borderColor:
+                    deviceInfo.type === 'sensor'
+                      ? 'rgba(0, 255, 136, 0.25)'
+                      : 'rgba(0, 229, 255, 0.30)',
+                  color:
+                    deviceInfo.type === 'sensor' ? '#00FF88' : '#00E5FF',
+                  fontSize: 10,
+                  marginTop: 2,
+                }}
+              >
                 {deviceInfo.type === 'sensor' ? '传感器' : '执行器'}
-              </Tag>
+              </span>
             </div>
           </div>
-          {deviceInfo.type === 'actuator' && selectedDevice && ['heater', 'cooler', 'mister'].includes(selectedDevice) && (
-            <Badge
-              status={isDeviceActive ? 'success' : 'default'}
-              text={<span className={isDeviceActive ? 'text-green-400' : 'text-gray-500'}>{isDeviceActive ? '运行中' : '已停止'}</span>}
-            />
+          {deviceInfo.type === 'actuator' &&
+            selectedDevice &&
+            ['heater', 'cooler', 'mister'].includes(selectedDevice) && (
+              <Badge
+                status={isDeviceActive ? 'success' : 'default'}
+                text={
+                  <span
+                    style={{
+                      color: isDeviceActive ? '#00FF88' : 'rgba(176, 200, 224, 0.35)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {isDeviceActive ? '运行中' : '已停止'}
+                  </span>
+                }
+              />
+            )}
+        </div>
+
+        <div
+          className="glass-card"
+          style={{ padding: '10px 14px' }}
+        >
+          <span
+            className="glass-label"
+            style={{ fontSize: 12, lineHeight: 1.5 }}
+          >
+            {deviceInfo.description}
+          </span>
+        </div>
+
+        {deviceInfo.type === 'actuator' &&
+          selectedDevice &&
+          ['heater', 'cooler', 'mister'].includes(selectedDevice) && (
+            <div
+              className="glass-card"
+              style={{ padding: '10px 14px' }}
+            >
+              <div className="glass-label" style={{ marginBottom: 6 }}>
+                自动控制状态
+              </div>
+              <div className="flex items-center" style={{ gap: 6, flexWrap: 'wrap' }}>
+                <span
+                  className="glass-tag"
+                  style={{
+                    background: autoControl.pidEnabled
+                      ? 'rgba(0, 229, 255, 0.12)'
+                      : 'rgba(8, 24, 58, 0.50)',
+                    borderColor: autoControl.pidEnabled
+                      ? 'rgba(0, 229, 255, 0.30)'
+                      : 'rgba(0, 229, 255, 0.08)',
+                    color: autoControl.pidEnabled ? '#00E5FF' : 'rgba(176, 200, 224, 0.35)',
+                  }}
+                >
+                  {autoControl.pidEnabled ? 'PID温度控制' : 'PID未启用'}
+                </span>
+                <span
+                  className="glass-tag"
+                  style={{
+                    background: autoControl.timerMisterEnabled
+                      ? 'rgba(0, 229, 255, 0.12)'
+                      : 'rgba(8, 24, 58, 0.50)',
+                    borderColor: autoControl.timerMisterEnabled
+                      ? 'rgba(0, 229, 255, 0.30)'
+                      : 'rgba(0, 229, 255, 0.08)',
+                    color: autoControl.timerMisterEnabled ? '#00E5FF' : 'rgba(176, 200, 224, 0.35)',
+                  }}
+                >
+                  {autoControl.timerMisterEnabled ? '定时雾化' : '雾化未启用'}
+                </span>
+                {!autoControl.pidEnabled && !autoControl.timerMisterEnabled && (
+                  <span
+                    className="glass-tag"
+                    style={{
+                      background: 'rgba(8, 24, 58, 0.50)',
+                      borderColor: 'rgba(0, 229, 255, 0.08)',
+                      color: 'rgba(176, 200, 224, 0.35)',
+                    }}
+                  >
+                    手动模式
+                  </span>
+                )}
+              </div>
+            </div>
           )}
-        </div>
-
-        <div className="bg-gray-800/50 rounded p-2.5 border border-gray-700/50">
-          <Text className="text-gray-400 text-xs">{deviceInfo.description}</Text>
-        </div>
-
-        {deviceInfo.type === 'actuator' && selectedDevice && ['heater', 'cooler', 'mister'].includes(selectedDevice) && (
-          <div className="bg-gray-800/50 rounded p-2.5 border border-gray-700/50">
-            <div className="text-gray-400 text-xs mb-1.5">自动控制状态</div>
-            <Tag color={autoControlMode !== 'off' ? 'blue' : 'default'}>
-              {autoControlMode === 'off' ? '手动模式' : autoControlMode === 'pid_temp' ? 'PID温度控制' : '定时雾化'}
-            </Tag>
-          </div>
-        )}
 
         <div>
-          <div className="text-gray-400 text-xs mb-1.5">设备参数</div>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="glass-label" style={{ marginBottom: 8 }}>
+            设备参数
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             {deviceInfo.specs.map((spec) => (
-              <div key={spec.label} className="bg-gray-800/40 rounded px-2 py-1.5 flex justify-between">
-                <span className="text-gray-500 text-xs">{spec.label}</span>
-                <span className="text-gray-300 text-xs font-medium">{spec.value}</span>
+              <div
+                key={spec.label}
+                className="glass-card"
+                style={{ padding: '8px 12px' }}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="glass-label">{spec.label}</span>
+                  <span
+                    style={{
+                      color: '#E8F4FF',
+                      fontSize: 12,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {spec.value}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -282,23 +413,53 @@ export default function DeviceDetailModal({ visible, onClose }: DeviceDetailModa
 
         {deviceInfo.relatedParams.length > 0 && (
           <div>
-            <div className="text-gray-400 text-xs mb-1.5">关联参数</div>
-            <div className="space-y-1">
+            <div className="glass-label" style={{ marginBottom: 8 }}>
+              关联参数
+            </div>
+            <div className="space-y-1.5">
               {deviceInfo.relatedParams.map((param) => {
                 const config = SENSOR_CONFIG.find((c) => c.key === param);
                 const value = sensorData[param];
                 const threshold = thresholds[param];
                 const isAlarm = value > threshold.max || value < threshold.min;
                 return (
-                  <div key={param} className="flex items-center justify-between bg-gray-800/40 rounded px-2 py-1.5">
-                    <span className="text-gray-400 text-xs">{config?.icon} {config?.label}</span>
-                    <Space size={4}>
-                      <span className={`text-sm font-bold ${isAlarm ? 'text-red-400' : 'text-blue-400'}`}>
-                        {value.toFixed(config?.decimals ?? 1)}{config?.unit}
+                  <div
+                    key={param}
+                    className={`flex items-center justify-between ${
+                      isAlarm ? 'glass-card-alarm' : 'glass-card'
+                    }`}
+                    style={{ padding: '8px 12px' }}
+                  >
+                    <span className="glass-label">
+                      {config?.icon} {config?.label}
+                    </span>
+                    <Space size={6}>
+                      <span
+                        className="glass-value-sm"
+                        style={{
+                          color: isAlarm ? '#FF4757' : '#00E5FF',
+                          fontSize: 14,
+                        }}
+                      >
+                        {value.toFixed(config?.decimals ?? 1)}
+                        {config?.unit}
                       </span>
-                      <Tag color={isAlarm ? 'error' : 'success'} className="m-0 text-[10px]">
+                      <span
+                        className="glass-tag"
+                        style={{
+                          background: isAlarm
+                            ? 'rgba(255, 71, 87, 0.15)'
+                            : 'rgba(0, 255, 136, 0.12)',
+                          borderColor: isAlarm
+                            ? 'rgba(255, 71, 87, 0.30)'
+                            : 'rgba(0, 255, 136, 0.25)',
+                          color: isAlarm ? '#FF4757' : '#00FF88',
+                          fontSize: 9,
+                          padding: '1px 6px',
+                        }}
+                      >
                         {isAlarm ? '异常' : '正常'}
-                      </Tag>
+                      </span>
                     </Space>
                   </div>
                 );
@@ -309,7 +470,9 @@ export default function DeviceDetailModal({ visible, onClose }: DeviceDetailModa
 
         {chartOption && (
           <div>
-            <div className="text-gray-400 text-xs mb-1.5">数据趋势</div>
+            <div className="glass-label" style={{ marginBottom: 8 }}>
+              数据趋势
+            </div>
             <ReactECharts option={chartOption} style={{ height: 180 }} />
           </div>
         )}

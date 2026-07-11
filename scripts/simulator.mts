@@ -1,6 +1,6 @@
 import mqtt from 'mqtt';
 
-const BROKER_URL = process.env.MQTT_BROKER || 'ws://localhost:8083/mqtt';
+const BROKER_URL = process.env.MQTT_BROKER || 'mqtt://localhost:1883';
 const TOPIC = '/lettuce/sensor/data';
 const INTERVAL_MS = 2000;
 
